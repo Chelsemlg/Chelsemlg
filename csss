@@ -1,0 +1,136 @@
+#define _CRT_SECURE_NO_WARNINGS
+#define DEBUG 0
+#include <stdio.h>
+#include <malloc.h>
+#include <stdlib.h>
+#include <string.h>
+#include <locale.h>
+#pragma warning(disable : 4996)
+
+int main() {
+	system("chcp 1251");    
+	system("cls");		    
+	char current;		    
+	int k = 1;		   
+	int i, j, n, length = 0;    
+	int full;                   
+	FILE* file;		    
+	int sum = 1;
+	//		Ввод динамической матрицы
+	scanf_s("%d", &n);					
+	int* flag = (int*)malloc(n * sizeof(int));		
+	int** a = (int**)malloc(n * sizeof(int*));		
+	for (int arr = 0; arr < n; arr++)			{
+		a[arr] = (int*)malloc(sizeof(int));
+	}
+	current = getchar();			
+	for (i = 0; i < n; i++){
+		printf("%d  : ", i);
+		current = getchar();			
+		for (j = 0; current != '\n'; j++)	{
+			if ((current == '1') || (current == '0'))	{
+				a[i] = (int*)realloc(a[i], sizeof(int) * k);	
+				(a[i])[k - 1] = (int)current - '0';	
+				++k;		
+			}
+			current = getchar();	
+		}
+		current = '\0';				
+		length = k - 1;				
+		k = 1;			
+	}
+	printf("\n\n");
+	//Вывод  в консоль
+	printf("\n\n   ");
+	for (j = 1; j <= n; j++) {
+		printf("%2d", j);
+	}
+	printf("\n");
+	for (j = 1; j <= ((3 * length) + 2); j++){
+		printf("-");
+	}
+	printf("\n");
+	for (i = 0; i < n; i++){
+		printf("%i| ", (i + 1));
+		for (j = 0; j < length; j++){
+			printf("%2d", a[i][j]);
+		}
+		printf("\n");
+	}
+	
+	//--------------------------------------------------------------//
+	//			Работа с dot файлом			//
+	//--------------------------------------------------------------//
+	if ((file = fopen("Dot_file.txt", "w")) == NULL) {	// открыли файл Dot_file.txt для записи
+		printf("Cannot open file.\n");			// если ошибка, то печатаем ошибку
+		exit(1);					// завершаем программу
+	}
+	fprintf(file, "graph G{\n");				// заполняем файл на языке dot
+
+
+	int t = -1;				// индекс первой встретившийся единицы
+	full = 0;				// индекс количества единиц
+	for (i = 0; i < n; i++)
+	{
+		fprintf(file, "\t%d;\n", (i + 1));
+	}
+	for (j = 0; j < length; j++)			// цикл по столбцам
+	{
+		for (i = 0; i < n; i++)				// цикл по строкам
+		{
+			if ((a[i][j] == 1) && (full > 2))                         // если в одном столбце две 1, то печатаем ошибку, т.к. это
+										  //	противоречит определению матрицы инцидентности
+			{
+				printf("Нельзя вводить больше 2 единицы в столбце");
+				exit(-1);
+			}
+			else
+			{
+				if ((a[i][j] == 1) && (full == 0))       // изначально full = 0;
+				{
+					fprintf(file, "\t%d", (i + 1));	 // если нашли первыую единицу в столбце, то записываем в файл
+					fprintf(file, " -- ");
+					full++;				 // инк. full для поиска второй единицы
+					t = i;				 // индекс первой единицы равен i
+				}
+				else
+				{
+					if ((a[i][j] == 1) && (full == 1))       // если нашли еще единицу и уже была единица (full = 1)
+					{
+						fprintf(file, "%d", (i + 1));	 // печатаем в соответствии с форматом
+						fprintf(file, " [label=%c];\n", (j));
+						full++;
+					}
+				}
+			}
+		}
+		if (t != -1)
+		{
+			if (full == 1)				  // если встретилась только одна единица в столбце то значит вершина замкнута сама на себя
+			{
+				fprintf(file, "\t%d", (t + 1));   // печатаем её же
+				fprintf(file, ";\n");
+			}
+		}
+		full = 0;		// обнуляем счётчики для анализа всл. столбца
+		t = -1;
+	}
+	fprintf(file, "}");
+	fclose(file);		// закрываем файл
+	system("dot C:\\Users\\Professional\\Desktop\\Projects\\dz2\\Dot_file.txt -Tbmp -o Dot_file.bmp");	// вызываем dot и передаем ему записанный 
+																										   // файл Dot_file.txt и полученный граф сохраняем в Dot_file.bmp 
+
+	system("rundll32  \"%ProgramFiles%\\Windows Photo Viewer\\PhotoViewer.dll\", ImageView_Fullscreen C:\\Users\\Professional\\Desktop\\Projects\\dz2\\Dot_file.bmp");
+	// запускаем встроенный просмотр фото в винде
+
+//--------------------------------------------------------------//
+//                     Очистка памяти                           //
+//--------------------------------------------------------------//
+	for (i = 0; i < n; i++) 	// проходим по массиву строк и очищаем его
+	{
+		free(a[i]);
+	}
+	free(a);			// очищаем весь двумерный массив
+	getchar();
+	return 0;
+}
